@@ -14,6 +14,9 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 	static int STOP_LEVEL = 6;
 	static int TOLERANCE = 2;
 	
+	static boolean calibratedHigh = false;
+	static boolean calibratedLow = false;
+	
 	private ColorSensor cs = null;
 	private TouchSensor bump = null;
 	DifferentialPilot pilot = null;
@@ -41,33 +44,65 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 				System.out.println("The robot is " + result);
 				
 				oldLightLevel = lightLevel;
+				try{
+					Thread.sleep(200);
+				}catch(Exception E){
+					
+				}
 				
 			}
 			return;
 		}
-		if(b == Button.RIGHT){
+		if(b == Button.RIGHT && !calibratedHigh){
 			cs.calibrateHigh();
-			NONE_LEVEL = 0;
-			LEFT_LEVEL = 0;
-			FW_LEVEL = 0;
-			RIGHT_LEVEL = 0; 
-			BW_LEVEL = 0;
-			STOP_LEVEL = 0;
+			resetLevels();
 			LCD.clear();
+			calibratedHigh = true;
 			System.out.println("Calibrated high");
 			return;
 		}
-		if(b == Button.LEFT){
+		if(b == Button.LEFT && !calibratedLow){
 			cs.calibrateLow();
-			NONE_LEVEL = 0;
-			LEFT_LEVEL = 0;
-			FW_LEVEL = 0;
-			RIGHT_LEVEL = 0; 
-			BW_LEVEL = 0;
-			STOP_LEVEL = 0;
+			resetLevels();
 			LCD.clear();
+			calibratedLow = true;
 			System.out.println("Calibrated low");
 			return;
+		}
+		if(b == Button.RIGHT && calibratedHigh && calibratedLow){
+			//calibrate levels
+			int lightLevel = cs.getLightValue();
+			LCD.clear();
+			if(NONE_LEVEL == 0){
+				NONE_LEVEL = lightLevel;
+				System.out.println("NONE_LEVEL=" + lightLevel);
+				return;
+			}
+			if(LEFT_LEVEL == 0){
+				LEFT_LEVEL = lightLevel;
+				System.out.println("LEFT_LEVEL=" + lightLevel);
+				return;
+			}
+			if(FW_LEVEL == 0){
+				FW_LEVEL = lightLevel;
+				System.out.println("FW_LEVEL=" + lightLevel);
+				return;
+			}
+			if(RIGHT_LEVEL == 0){
+				RIGHT_LEVEL = lightLevel;
+				System.out.println("RIGHT_LEVEL=" + lightLevel);
+				return;
+			}
+			if(BW_LEVEL == 0){
+				BW_LEVEL = lightLevel;
+				System.out.println("BW_LEVEL=" + lightLevel);
+				return;
+			}
+			if(STOP_LEVEL == 0){
+				STOP_LEVEL = lightLevel;
+				System.out.println("STOP_LEVEL=" + lightLevel);
+				return;
+			}
 		}
 	}
 	
@@ -126,7 +161,7 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 		Button.ENTER.addButtonListener(lightRobot);
 		Button.RIGHT.addButtonListener(lightRobot);
 		Button.LEFT.addButtonListener(lightRobot);
-		SensorPort.S4.addSensorPortListener(lightRobot);
+//		SensorPort.S4.addSensorPortListener(lightRobot);
 		
 		System.out.println("Press ENTER to start.");
 		System.out.println("Press arrows to calibrate");
@@ -139,42 +174,57 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 	
 	protected static DifferentialPilot preparePilot(){
 		DifferentialPilot pilot = new DifferentialPilot(3.8f, 9.5f, Motor.A, Motor.C, true);
-		pilot.setRotateSpeed(30);
+		pilot.setRotateSpeed(20);
 		
 		return pilot;
 	}
 	
+	public static void resetLevels(){
+		NONE_LEVEL = 0;
+		LEFT_LEVEL = 0;
+		FW_LEVEL = 0;
+		RIGHT_LEVEL = 0; 
+		BW_LEVEL = 0;
+		STOP_LEVEL = 0;
+		LCD.clear();
+	}
+	
 	protected static String doCommand(DifferentialPilot pilot, int lightLevel){
 		String result = "doing nothing " + lightLevel;
-		if (lightLevel <= STOP_LEVEL){
+		if (Math.abs(lightLevel - STOP_LEVEL) <= TOLERANCE){
 			//stop the motor
 			if (pilot.isMoving())
 				pilot.stop();
-		}else if(STOP_LEVEL < lightLevel && lightLevel <= BW_LEVEL ){
+			return result = "stopped " + lightLevel;
+		}
+		if(Math.abs(lightLevel - BW_LEVEL) <= TOLERANCE){
 			//go bw
 			if (pilot.isMoving())
 				pilot.stop();
 			pilot.arc(0, 180);
 			pilot.forward();
-			result = "moving backwards";
-		}else if(BW_LEVEL < lightLevel && lightLevel <= RIGHT_LEVEL){
+			return result = "moving backwards " + lightLevel;
+		}
+		if(Math.abs(lightLevel - RIGHT_LEVEL) <= TOLERANCE){
 			//go right
 			if (pilot.isMoving())
 				pilot.stop();
 			pilot.arc(0, -90);
 			pilot.forward();
-			result  = "turning right";
-		}else if(RIGHT_LEVEL <= lightLevel && lightLevel <= FW_LEVEL){
+			return result  = "turning right " + lightLevel;
+		}
+		if(Math.abs(lightLevel - FW_LEVEL) <= TOLERANCE){
 			//go fw
 			if (pilot.isStalled())
 				pilot.forward();
-			result = "moving forward";
-		}else if(FW_LEVEL < lightLevel && lightLevel <= LEFT_LEVEL){
+			return result = "moving forward " + lightLevel;
+		}
+		if(Math.abs(lightLevel - LEFT_LEVEL) <= TOLERANCE){
 			if (pilot.isMoving())
 				pilot.stop();
 			pilot.arc(0, 90);
 			pilot.forward();
-			result = "turning left";
+			result = "turning left " + lightLevel;
 		}
 		
 		return result;
