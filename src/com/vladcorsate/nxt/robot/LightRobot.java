@@ -4,34 +4,92 @@ import lejos.nxt.*;
 import lejos.robotics.Color;
 import lejos.robotics.navigation.*;
 
+import java.io.*;
+
 public class LightRobot implements ButtonListener, SensorPortListener {
 	
-	static int NONE_LEVEL = 30;
-	static int LEFT_LEVEL = 26;
-	static int FW_LEVEL = 18;
-	static int RIGHT_LEVEL = 14;
-	static int BW_LEVEL = 10;
-	static int STOP_LEVEL = 6;
+	static int NONE_LEVEL = 0;
+	static int LEFT_LEVEL = 0;
+	static int FW_LEVEL = 0;
+	static int RIGHT_LEVEL = 0;
+	static int BW_LEVEL = 0;
+	static int STOP_LEVEL = 0;
 	static int TOLERANCE = 2;
 	
 	static boolean calibratedHigh = false;
 	static boolean calibratedLow = false;
 	
+	static final String calibrationFile = "calibrate.dat";
+	
 	private ColorSensor cs = null;
 	private TouchSensor bump = null;
 	DifferentialPilot pilot = null;
+	private File calFile = null;
+	private FileOutputStream fileOut = null;
+	private FileInputStream fileIn = null;
 	
 	public LightRobot (){
 		cs = new ColorSensor(SensorPort.S1, Color.NONE);
 		pilot = preparePilot();
 		bump = new TouchSensor(SensorPort.S4);
+		
+		calFile = new File(calibrationFile);
+	}
+	
+	private void saveLevels(){
+		try{
+			fileOut = new FileOutputStream(calFile, false);
+			DataOutputStream out = new DataOutputStream(fileOut);
+			out.writeInt(NONE_LEVEL);
+			out.writeInt(LEFT_LEVEL);
+			out.writeInt(FW_LEVEL);
+			out.writeInt(RIGHT_LEVEL);
+			out.writeInt(BW_LEVEL);
+			out.writeInt(STOP_LEVEL);
+			out.flush();
+			out.close();
+		}catch(IOException e){
+			System.out.println("Failed to create output stream!");
+			Button.waitForPress();
+			System.exit(1);
+		}
+		
+	}
+	
+	private void loadLevels(){
+		if (NONE_LEVEL > 0){
+			System.out.println("Loaded the levels!");
+			return;
+		}
+		try{
+			System.out.println("Reading levels from file!");
+			fileIn = new FileInputStream(calFile);
+			DataInputStream in = new DataInputStream(fileIn);
+			NONE_LEVEL = in.readInt();
+			LEFT_LEVEL = in.readInt();
+			FW_LEVEL = in.readInt();
+			RIGHT_LEVEL = in.readInt();
+			BW_LEVEL = in.readInt();
+			STOP_LEVEL = in.readInt();
+			System.out.println("NONE_LEVEL=" + NONE_LEVEL);
+			in.close();
+		}catch(IOException e){
+			System.out.println(e.getMessage());
+		}
+		
 	}
 	
 	public void buttonPressed(Button b){
-		if(b == Button.ENTER && NONE_LEVEL > 0){
+		if(b == Button.ENTER){
+			loadLevels();	
 			int oldLightLevel = 0;
-			while(!bump.isPressed()){
+			while(true){
 //				LCD.clear();
+				try{
+					Thread.sleep(300);
+				}catch(Exception E){
+					
+				}
 				int lightLevel = cs.getLightValue();
 				int delta = Math.abs(lightLevel - oldLightLevel);
 				
@@ -44,14 +102,8 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 				System.out.println("The robot is " + result);
 				
 				oldLightLevel = lightLevel;
-				try{
-					Thread.sleep(200);
-				}catch(Exception E){
-					
-				}
 				
 			}
-			return;
 		}
 		if(b == Button.RIGHT && !calibratedHigh){
 			cs.calibrateHigh();
@@ -101,6 +153,7 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 			if(STOP_LEVEL == 0){
 				STOP_LEVEL = lightLevel;
 				System.out.println("STOP_LEVEL=" + lightLevel);
+				saveLevels();
 				return;
 			}
 		}
@@ -174,7 +227,7 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 	
 	protected static DifferentialPilot preparePilot(){
 		DifferentialPilot pilot = new DifferentialPilot(3.8f, 9.5f, Motor.A, Motor.C, true);
-		pilot.setRotateSpeed(20);
+		pilot.setRotateSpeed(15);
 		
 		return pilot;
 	}
@@ -231,5 +284,5 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 		
 	}
 
+	
 }
-
