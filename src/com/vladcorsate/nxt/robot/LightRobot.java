@@ -268,7 +268,7 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 		}
 		if(Math.abs(lightLevel - FW_LEVEL) <= TOLERANCE){
 			//go fw
-			if (pilot.isStalled())
+			if (!pilot.isMoving())
 				pilot.forward();
 			return result = "moving forward " + lightLevel;
 		}
