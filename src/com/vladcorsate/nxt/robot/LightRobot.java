@@ -3,10 +3,11 @@ package com.vladcorsate.nxt.robot;
 import lejos.nxt.*;
 import lejos.robotics.Color;
 import lejos.robotics.navigation.*;
+import lejos.robotics.objectdetection.*;
 
 import java.io.*;
 
-public class LightRobot implements ButtonListener, SensorPortListener {
+public class LightRobot implements ButtonListener, SensorPortListener, FeatureListener{
 	
 	static int NONE_LEVEL = 0;
 	static int LEFT_LEVEL = 0;
@@ -15,6 +16,7 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 	static int BW_LEVEL = 0;
 	static int STOP_LEVEL = 0;
 	static int TOLERANCE = 2;
+	static int MAX_DETECT = 20;
 	
 	static boolean calibratedHigh = false;
 	static boolean calibratedLow = false;
@@ -24,14 +26,16 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 	private ColorSensor cs = null;
 	private TouchSensor bump = null;
 	DifferentialPilot pilot = null;
+	private UltrasonicSensor us = null;
 	private File calFile = null;
 	private FileOutputStream fileOut = null;
 	private FileInputStream fileIn = null;
 	
 	public LightRobot (){
-		cs = new ColorSensor(SensorPort.S1, Color.NONE);
+		cs = new ColorSensor(SensorPort.S4, Color.NONE);
 		pilot = preparePilot();
-		bump = new TouchSensor(SensorPort.S4);
+		bump = new TouchSensor(SensorPort.S1);
+		us = new UltrasonicSensor(SensorPort.S2);
 		
 		calFile = new File(calibrationFile);
 	}
@@ -198,6 +202,13 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 		}
 	}
 	
+	public void featureDetected(Feature feature, FeatureDetector detector){
+		System.out.println("HOPA!!!");
+		if(pilot.isMoving()){
+			pilot.stop();
+		}
+	}
+	
 	/**
 	 * @param args
 	 */
@@ -209,6 +220,8 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 		Button.ENTER.addButtonListener(lightRobot);
 		Button.RIGHT.addButtonListener(lightRobot);
 		Button.LEFT.addButtonListener(lightRobot);
+		RangeFeatureDetector fd = new RangeFeatureDetector(lightRobot.us, MAX_DETECT, 500);
+		fd.addListener(lightRobot);
 //		SensorPort.S4.addSensorPortListener(lightRobot);
 		
 		System.out.println("Press ENTER to start.");
@@ -222,7 +235,7 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 	
 	protected static DifferentialPilot preparePilot(){
 		DifferentialPilot pilot = new DifferentialPilot(3.8f, 9.5f, Motor.A, Motor.C, true);
-		pilot.setTravelSpeed(10);
+		pilot.setTravelSpeed(5);
 		pilot.setRotateSpeed(5);
 		
 		return pilot;
