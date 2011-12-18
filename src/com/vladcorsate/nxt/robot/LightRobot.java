@@ -87,22 +87,17 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 //				LCD.clear();
 				try{
 					Thread.sleep(300);
-				}catch(Exception E){
-					
-				}
+				}catch(Exception E){}
 				int lightLevel = cs.getLightValue();
 				int delta = Math.abs(lightLevel - oldLightLevel);
-				
+				oldLightLevel = lightLevel;
 				if (Math.abs(lightLevel - NONE_LEVEL) <= TOLERANCE || delta <= TOLERANCE ){
 					//do nothing
 					continue;
 				}
 				
 				String result = doCommand(pilot, lightLevel);
-				System.out.println("The robot is " + result);
-				
-				oldLightLevel = lightLevel;
-				
+				System.out.println("The robot is " + result);				
 			}
 		}
 		if(b == Button.RIGHT && !calibratedHigh){
@@ -227,7 +222,8 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 	
 	protected static DifferentialPilot preparePilot(){
 		DifferentialPilot pilot = new DifferentialPilot(3.8f, 9.5f, Motor.A, Motor.C, true);
-		pilot.setRotateSpeed(15);
+		pilot.setTravelSpeed(10);
+		pilot.setRotateSpeed(5);
 		
 		return pilot;
 	}
@@ -254,8 +250,9 @@ public class LightRobot implements ButtonListener, SensorPortListener {
 			//go bw
 			if (pilot.isMoving())
 				pilot.stop();
-			pilot.arc(0, 180);
-			pilot.forward();
+			//pilot.arc(0, 180);
+			//pilot.forward();
+			pilot.backward();
 			return result = "moving backwards " + lightLevel;
 		}
 		if(Math.abs(lightLevel - RIGHT_LEVEL) <= TOLERANCE){
