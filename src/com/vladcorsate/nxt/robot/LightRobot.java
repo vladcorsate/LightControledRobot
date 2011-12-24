@@ -15,6 +15,13 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 	static int RIGHT_LEVEL = 0;
 	static int BW_LEVEL = 0;
 	static int STOP_LEVEL = 0;
+	static int ROTATE_LEVEL = 0;
+	static int ACC_LEVEL = 0;
+	static int DEACC_LEVEL = 0;
+	//speed
+	static int SPEED_STEP = 5;
+	static int MIN_SPEED = 5;
+	
 	static int TOLERANCE = 2;
 	static int MAX_DETECT = 20;
 	
@@ -50,6 +57,9 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 			out.writeInt(RIGHT_LEVEL);
 			out.writeInt(BW_LEVEL);
 			out.writeInt(STOP_LEVEL);
+			out.writeInt(ROTATE_LEVEL);
+			out.writeInt(ACC_LEVEL);
+			out.writeInt(DEACC_LEVEL);
 			out.flush();
 			out.close();
 		}catch(IOException e){
@@ -88,7 +98,6 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 			loadLevels();	
 			int oldLightLevel = 0;
 			while(true){
-//				LCD.clear();
 				try{
 					Thread.sleep(300);
 				}catch(Exception E){}
@@ -152,6 +161,21 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 			if(STOP_LEVEL == 0){
 				STOP_LEVEL = lightLevel;
 				System.out.println("STOP_LEVEL=" + lightLevel);
+				return;
+			}
+			if(ROTATE_LEVEL == 0){
+				ROTATE_LEVEL = lightLevel;
+				System.out.println("ROTATE_LEVEL=" + lightLevel);
+				return;
+			}
+			if(ACC_LEVEL == 0){
+				ACC_LEVEL = lightLevel;
+				System.out.println("ACC_LEVEL=" + lightLevel);
+				return;
+			}
+			if(DEACC_LEVEL == 0){
+				DEACC_LEVEL = lightLevel;
+				System.out.println("DEACC_LEVEL=" + lightLevel);
 				saveLevels();
 				return;
 			}
@@ -236,7 +260,7 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 	protected static DifferentialPilot preparePilot(){
 		DifferentialPilot pilot = new DifferentialPilot(3.8f, 9.5f, Motor.A, Motor.C, true);
 		pilot.setTravelSpeed(5);
-		pilot.setRotateSpeed(5);
+		pilot.setRotateSpeed(10);
 		
 		return pilot;
 	}
@@ -288,6 +312,32 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 			pilot.arc(0, 90);
 			pilot.forward();
 			result = "turning left " + lightLevel;
+		}
+		if(Math.abs(lightLevel - ROTATE_LEVEL) <= TOLERANCE){
+			if (pilot.isMoving())
+				pilot.stop();
+			pilot.arc(0, 360);
+			result = "rotating " + lightLevel;
+		}
+		if(Math.abs(lightLevel - ACC_LEVEL) <= TOLERANCE){
+			if (pilot.getTravelSpeed() + SPEED_STEP <= pilot.getMaxTravelSpeed()){
+				pilot.setTravelSpeed(pilot.getTravelSpeed() + SPEED_STEP);
+				if (pilot.isMoving()){
+					pilot.stop();
+					pilot.forward();
+				}
+			}
+			result = "accelerating " + lightLevel;
+		}
+		if(Math.abs(lightLevel - DEACC_LEVEL) <= TOLERANCE){
+			if (pilot.getTravelSpeed() - SPEED_STEP >= MIN_SPEED){
+				pilot.setTravelSpeed(pilot.getTravelSpeed() - SPEED_STEP);
+				if (pilot.isMoving()){
+					pilot.stop();
+					pilot.forward();
+				}
+			}
+			result = "de-accelerating " + lightLevel;
 		}
 		
 		return result;
