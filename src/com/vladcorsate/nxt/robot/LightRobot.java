@@ -22,7 +22,7 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 	static int SPEED_STEP = 5;
 	static int MIN_SPEED = 5;
 	
-	static int TOLERANCE = 2;
+	static int TOLERANCE = 1;
 	static int MAX_DETECT = 20;
 	
 	static boolean calibratedHigh = false;
@@ -52,14 +52,14 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 			fileOut = new FileOutputStream(calFile, false);
 			DataOutputStream out = new DataOutputStream(fileOut);
 			out.writeInt(NONE_LEVEL);
-			out.writeInt(LEFT_LEVEL);
-			out.writeInt(FW_LEVEL);
-			out.writeInt(RIGHT_LEVEL);
-			out.writeInt(BW_LEVEL);
-			out.writeInt(STOP_LEVEL);
-			out.writeInt(ROTATE_LEVEL);
-			out.writeInt(ACC_LEVEL);
 			out.writeInt(DEACC_LEVEL);
+			out.writeInt(ACC_LEVEL);
+			out.writeInt(ROTATE_LEVEL);
+			out.writeInt(RIGHT_LEVEL);
+			out.writeInt(LEFT_LEVEL);
+			out.writeInt(BW_LEVEL);
+			out.writeInt(FW_LEVEL);
+			out.writeInt(STOP_LEVEL);
 			out.flush();
 			out.close();
 		}catch(IOException e){
@@ -80,10 +80,13 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 			fileIn = new FileInputStream(calFile);
 			DataInputStream in = new DataInputStream(fileIn);
 			NONE_LEVEL = in.readInt();
-			LEFT_LEVEL = in.readInt();
-			FW_LEVEL = in.readInt();
+			DEACC_LEVEL = in.readInt();
+			ACC_LEVEL = in.readInt();
+			ROTATE_LEVEL = in.readInt();
 			RIGHT_LEVEL = in.readInt();
+			LEFT_LEVEL = in.readInt();
 			BW_LEVEL = in.readInt();
+			FW_LEVEL = in.readInt();
 			STOP_LEVEL = in.readInt();
 			System.out.println("NONE_LEVEL=" + NONE_LEVEL);
 			in.close();
@@ -138,34 +141,9 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 				System.out.println("NONE_LEVEL=" + lightLevel);
 				return;
 			}
-			if(LEFT_LEVEL == 0){
-				LEFT_LEVEL = lightLevel;
-				System.out.println("LEFT_LEVEL=" + lightLevel);
-				return;
-			}
-			if(FW_LEVEL == 0){
-				FW_LEVEL = lightLevel;
-				System.out.println("FW_LEVEL=" + lightLevel);
-				return;
-			}
-			if(RIGHT_LEVEL == 0){
-				RIGHT_LEVEL = lightLevel;
-				System.out.println("RIGHT_LEVEL=" + lightLevel);
-				return;
-			}
-			if(BW_LEVEL == 0){
-				BW_LEVEL = lightLevel;
-				System.out.println("BW_LEVEL=" + lightLevel);
-				return;
-			}
-			if(STOP_LEVEL == 0){
-				STOP_LEVEL = lightLevel;
-				System.out.println("STOP_LEVEL=" + lightLevel);
-				return;
-			}
-			if(ROTATE_LEVEL == 0){
-				ROTATE_LEVEL = lightLevel;
-				System.out.println("ROTATE_LEVEL=" + lightLevel);
+			if(DEACC_LEVEL == 0){
+				DEACC_LEVEL = lightLevel;
+				System.out.println("DEACC_LEVEL=" + lightLevel);
 				return;
 			}
 			if(ACC_LEVEL == 0){
@@ -173,9 +151,34 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 				System.out.println("ACC_LEVEL=" + lightLevel);
 				return;
 			}
-			if(DEACC_LEVEL == 0){
-				DEACC_LEVEL = lightLevel;
-				System.out.println("DEACC_LEVEL=" + lightLevel);
+			if(ROTATE_LEVEL == 0){
+				ROTATE_LEVEL = lightLevel;
+				System.out.println("ROTATE_LEVEL=" + lightLevel);
+				return;
+			}
+			if(RIGHT_LEVEL == 0){
+				RIGHT_LEVEL = lightLevel;
+				System.out.println("RIGHT_LEVEL=" + lightLevel);
+				return;
+			}
+			if(LEFT_LEVEL == 0){
+				LEFT_LEVEL = lightLevel;
+				System.out.println("LEFT_LEVEL=" + lightLevel);
+				return;
+			}
+			if(BW_LEVEL == 0){
+				BW_LEVEL = lightLevel;
+				System.out.println("BW_LEVEL=" + lightLevel);
+				return;
+			}
+			if(FW_LEVEL == 0){
+				FW_LEVEL = lightLevel;
+				System.out.println("FW_LEVEL=" + lightLevel);
+				return;
+			}
+			if(STOP_LEVEL == 0){
+				STOP_LEVEL = lightLevel;
+				System.out.println("STOP_LEVEL=" + lightLevel);
 				saveLevels();
 				return;
 			}
@@ -316,7 +319,7 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 		if(Math.abs(lightLevel - ROTATE_LEVEL) <= TOLERANCE){
 			if (pilot.isMoving())
 				pilot.stop();
-			pilot.arc(0, 360);
+			pilot.rotate(360, true);
 			result = "rotating " + lightLevel;
 		}
 		if(Math.abs(lightLevel - ACC_LEVEL) <= TOLERANCE){
