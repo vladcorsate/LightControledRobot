@@ -23,7 +23,7 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 	static int MIN_SPEED = 5;
 	
 	static int TOLERANCE = 1;
-	static int MAX_DETECT = 20;
+	static int MAX_DETECT = 40;
 	
 	static boolean calibratedHigh = false;
 	static boolean calibratedLow = false;
@@ -52,8 +52,8 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 			fileOut = new FileOutputStream(calFile, false);
 			DataOutputStream out = new DataOutputStream(fileOut);
 			out.writeInt(NONE_LEVEL);
-			out.writeInt(DEACC_LEVEL);
-			out.writeInt(ACC_LEVEL);
+//			out.writeInt(DEACC_LEVEL);
+//			out.writeInt(ACC_LEVEL);
 			out.writeInt(ROTATE_LEVEL);
 			out.writeInt(RIGHT_LEVEL);
 			out.writeInt(LEFT_LEVEL);
@@ -80,8 +80,8 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 			fileIn = new FileInputStream(calFile);
 			DataInputStream in = new DataInputStream(fileIn);
 			NONE_LEVEL = in.readInt();
-			DEACC_LEVEL = in.readInt();
-			ACC_LEVEL = in.readInt();
+//			DEACC_LEVEL = in.readInt();
+//			ACC_LEVEL = in.readInt();
 			ROTATE_LEVEL = in.readInt();
 			RIGHT_LEVEL = in.readInt();
 			LEFT_LEVEL = in.readInt();
@@ -141,6 +141,7 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 				System.out.println("NONE_LEVEL=" + lightLevel);
 				return;
 			}
+			/*
 			if(DEACC_LEVEL == 0){
 				DEACC_LEVEL = lightLevel;
 				System.out.println("DEACC_LEVEL=" + lightLevel);
@@ -151,6 +152,7 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 				System.out.println("ACC_LEVEL=" + lightLevel);
 				return;
 			}
+			*/
 			if(ROTATE_LEVEL == 0){
 				ROTATE_LEVEL = lightLevel;
 				System.out.println("ROTATE_LEVEL=" + lightLevel);
@@ -233,6 +235,8 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 		System.out.println("HOPA!!!");
 		if(pilot.isMoving()){
 			pilot.stop();
+			pilot.travel(-15);
+			pilot.rotate(180);
 		}
 	}
 	
@@ -247,7 +251,7 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 		Button.ENTER.addButtonListener(lightRobot);
 		Button.RIGHT.addButtonListener(lightRobot);
 		Button.LEFT.addButtonListener(lightRobot);
-		RangeFeatureDetector fd = new RangeFeatureDetector(lightRobot.us, MAX_DETECT, 500);
+		RangeFeatureDetector fd = new RangeFeatureDetector(lightRobot.us, MAX_DETECT, 250);
 		fd.addListener(lightRobot);
 //		SensorPort.S4.addSensorPortListener(lightRobot);
 		
@@ -262,8 +266,8 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 	
 	protected static DifferentialPilot preparePilot(){
 		DifferentialPilot pilot = new DifferentialPilot(3.8f, 9.5f, Motor.A, Motor.C, true);
-		pilot.setTravelSpeed(5);
-		pilot.setRotateSpeed(10);
+		pilot.setTravelSpeed(10);
+		pilot.setRotateSpeed(30);
 		
 		return pilot;
 	}
@@ -305,8 +309,8 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 		}
 		if(Math.abs(lightLevel - FW_LEVEL) <= TOLERANCE){
 			//go fw
-			if (!pilot.isMoving())
-				pilot.forward();
+//			if (!pilot.isMoving())
+			pilot.forward();
 			return result = "moving forward " + lightLevel;
 		}
 		if(Math.abs(lightLevel - LEFT_LEVEL) <= TOLERANCE){
@@ -322,6 +326,7 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 			pilot.rotate(360, true);
 			result = "rotating " + lightLevel;
 		}
+		/*
 		if(Math.abs(lightLevel - ACC_LEVEL) <= TOLERANCE){
 			if (pilot.getTravelSpeed() + SPEED_STEP <= pilot.getMaxTravelSpeed()){
 				pilot.setTravelSpeed(pilot.getTravelSpeed() + SPEED_STEP);
@@ -342,6 +347,7 @@ public class LightRobot implements ButtonListener, SensorPortListener, FeatureLi
 			}
 			result = "de-accelerating " + lightLevel;
 		}
+		*/
 		
 		return result;
 		
